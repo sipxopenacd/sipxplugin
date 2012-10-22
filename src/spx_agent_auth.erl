@@ -85,7 +85,7 @@ get_agent(id, ID) ->
 	end.
 
 -type(profile_name() :: string()).
--spec(auth_agent/2 :: (Username :: string(), Password :: string()) -> {ok, 'deny'} | {ok, {'allow', string(), skill_list(), security_level(), profile_name()}} | pass).
+-spec(auth_agent/2 :: (Username :: string(), Password :: string()) -> {ok, 'deny'} | {ok, {'allow', string(), skills(), security_level(), profile_name()}} | pass).
 auth_agent(Username, Password) ->
 	case catch db_find_one(agent, [{<<"name">>, Username}]) of
 		{ok, []} -> pass;
@@ -170,7 +170,7 @@ db_find_one(Props) when is_list(Props) ->
 
 start_test_() ->
 	{setup, fun() ->
-		cpx_hooks:start_link(),	
+		cpx_hooks:start_link(),
 		spx_agent_auth:start()
 	end, [
 		?_assert(has_hook(spx_get_agents, get_agents)),
@@ -223,10 +223,10 @@ integ_get_agent_test_() ->
 		?_assertMatch(none, spx_agent_auth:get_agent(id, "noone")),
 
 		?_assertMatch({ok,
-			#agent_auth{id="agent1", login="foo", securitylevel=admin}}, 
+			#agent_auth{id="agent1", login="foo", securitylevel=admin}},
 			spx_agent_auth:get_agent(login, "foo")),
 		?_assertMatch({ok,
-			#agent_auth{id="agent1", login="foo", securitylevel=admin}}, 
+			#agent_auth{id="agent1", login="foo", securitylevel=admin}},
 			spx_agent_auth:get_agent(id, "agent1"))
 		]
 	}.
@@ -235,7 +235,7 @@ integ_auth_agent_test_() ->
 	{setup, fun reset_test_db/0, fun stop_test_db/1,
 		[?_assertMatch(pass, spx_agent_auth:auth_agent("not", "here")),
 		?_assertMatch({ok, deny}, spx_agent_auth:auth_agent("foo", "wrongpass")),
-		?_assertMatch({ok, 
+		?_assertMatch({ok,
 			{allow, "agent1", _, admin, "foobaz"}}, %% TODO fill up
 			spx_agent_auth:auth_agent("foo", "foosecret"))
 		]
@@ -279,7 +279,7 @@ reset_test_db() ->
 		Dir -> Dir
 	end,
 	Path = filename:join(PrivDir, "test_entries.json"),
-	
+
 	{ok, Bin} = file:read_file(Path),
 	{struct, [{"entries", {array, Entries}}]} = mochijson:decode(Bin),
 
