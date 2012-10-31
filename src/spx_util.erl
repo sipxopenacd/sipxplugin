@@ -443,6 +443,13 @@ read_recipe_action(<<"announce">>, P) ->
 			{ok, {announce, binary_to_list(Bin)}};
 		_ ->
 			{error, invalid_vlu}
+	end;
+read_recipe_action(<<"transfer_queue">>, P) ->
+	case proplists:get_value(<<"actionValue">>, P) of
+		Bin when is_binary(Bin) ->
+			{ok, {transfer_queue, binary_to_list(Bin)}};
+		_ ->
+			{error, invalid_vlu}
 	end.
 
 build_skill(P) ->
@@ -730,7 +737,12 @@ build_recipe_test_() ->
 		?_assertEqual(ActionOnlyExp({announce, "helloworld"}),
 			BuildRecipeWithAction(<<"announce">>, <<"helloworld">>)),
 		?_assertEqual(EmptyStep,
-			BuildRecipeWithAction(<<"announce">>, 123))
+			BuildRecipeWithAction(<<"announce">>, 123)),
+
+		?_assertEqual(ActionOnlyExp({transfer_queue, "nqueue"}),
+			BuildRecipeWithAction(<<"transfer_queue">>, <<"nqueue">>)),
+		?_assertEqual(EmptyStep,
+			BuildRecipeWithAction(<<"transfer_queue">>, 123))
 
 		%% TODO custom operations
 	].
