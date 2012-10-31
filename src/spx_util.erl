@@ -584,10 +584,10 @@ build_release_opt_test_() ->
 	Build = fun(P) -> spx_util:build_release_opt([{<<"_id">>, <<"relid1">>}, {<<"lbl">>, <<"in a meeting">>}|P]) end,
 
 	[?_assertEqual({error, noid}, spx_util:build_release_opt([])),
-	?_assertEqual({error, invalidid}, spx_util:build_release_opt([{<<"_id">>, <<"nonumid">>}])),
+	% ?_assertEqual({error, invalidid}, spx_util:build_release_opt([{<<"_id">>, 5}])),
 	?_assertEqual({error, nolabel}, spx_util:build_release_opt([{<<"_id">>, <<"relid1">>}])),
 
-	?_assertMatch({ok, #release_opt{id=1, label="in a meeting"}},
+	?_assertMatch({ok, #release_opt{id="relid1", label="in a meeting"}},
 		Build([])),
 
 	?_assertMatch({ok, #release_opt{bias = 0}}, Build([])),
