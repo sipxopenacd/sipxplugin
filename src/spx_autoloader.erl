@@ -219,11 +219,11 @@ try_do(Name, Action, Fun, Conf, NConf) ->
 	end.
 
 add_autoloads() ->
-	spx_agentconfig_loader:start(),
+	% spx_agentconfig_loader:start(),
 	spx_log_loader:start(),
 	spx_freeswitchmedia_loader:start(),
-	spx_webmgt_loader:start(),
-	spx_agentweb_loader:start(),
+	% spx_webmgt_loader:start(),
+	% spx_agentweb_loader:start(),
 	spx_queue_loader:start(),
 
 	ok.
