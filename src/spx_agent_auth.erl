@@ -103,7 +103,7 @@ auth_agent(Username, Password) ->
 					{ok, Auth} = spx_util:build_agent(P),
 					{ok, {allow, Auth#agent_auth.id,
 						Auth#agent_auth.skills,
-						Auth#agent_auth.securitylevel,
+						Auth#agent_auth.security_level,
 						Auth#agent_auth.profile}};
 				_ -> {ok, deny}
 			end;

@@ -119,11 +119,11 @@ build_agent([{<<"clns">>, {array, Clients}}|T], Acc) ->
 
 %% Security Level
 build_agent([{<<"scrty">>, <<"ADMIN">>}|T], Acc) ->
-	build_agent(T, Acc#agent_auth{securitylevel = admin});
+	build_agent(T, Acc#agent_auth{security_level = admin});
 build_agent([{<<"scrty">>, <<"SUPERVISOR">>}|T], Acc) ->
-	build_agent(T, Acc#agent_auth{securitylevel = supervisor});
+	build_agent(T, Acc#agent_auth{security_level = supervisor});
 build_agent([{<<"scrty">>, <<"AGENT">>}|T], Acc) ->
-	build_agent(T, Acc#agent_auth{securitylevel = agent});
+	build_agent(T, Acc#agent_auth{security_level = agent});
 
 %% Profile
 build_agent([{<<"aggrp">>, Profile}|T], Acc) ->
