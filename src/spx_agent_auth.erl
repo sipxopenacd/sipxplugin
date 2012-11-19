@@ -26,15 +26,29 @@
 -define(DB, <<"imdb">>).
 -endif.
 
+-behaviour(agent_auth).
+
+%% API
 -export([
-	start/0,
-	get_agents/0,
+	start/0
+]).
+
+%% Callbacks
+-export([
+	get_agent_by_login/1,
+	get_agent_by_id/1,
 	get_agents_by_profile/1,
-	get_agent/2,
-	auth_agent/2,
-	get_profiles/0,
+	auth/2,
 	get_profile/1,
+	get_default_profile/0,
+	get_profiles/0,
+	get_release/1,
 	get_releases/0
+]).
+
+%% Utils
+-export([
+	get_agents/0
 ]).
 
 %%====================================================================
@@ -43,6 +57,8 @@
 
 start() ->
 	%% Agents
+
+	%% Hooks for use with multi auth
 	cpx_hooks:set_hook(spx_get_agents, get_agents, ?MODULE, get_agents, [], 200),
 	cpx_hooks:set_hook(spx_get_agents_by_profile, get_agents_by_profile, ?MODULE, get_agents_by_profile, [], 200),
 	cpx_hooks:set_hook(spx_get_agent, get_agent, ?MODULE, get_agent, [], 200),
@@ -52,6 +68,9 @@ start() ->
 	cpx_hooks:set_hook(spx_get_releases, get_releases, ?MODULE, get_releases, [], 200),
 	ok.
 
+%% Callbacks
+
+%% @doc Get all agents. Use only for testing
 -spec(get_agents/0 :: () -> {ok, [#agent_auth{}]}).
 get_agents() ->
 	case catch db_find(agent, []) of
@@ -61,7 +80,6 @@ get_agents() ->
 			{ok, []}
 	end.
 
--spec(get_agents_by_profile/1 :: (Profile :: string()) -> {ok, [#agent_auth{}]}).
 get_agents_by_profile(Profile) ->
 	case catch db_find(agent, [{<<"aggrp">>, iolist_to_binary(Profile)}]) of
 		{ok, AgentProps} ->
@@ -70,23 +88,21 @@ get_agents_by_profile(Profile) ->
 			{ok, []}
 	end.
 
--spec(get_agent/2 :: (Key :: 'id' | 'login', Value :: string()) -> {ok, #agent_auth{}} | none).
-get_agent(login, Login) ->
+get_agent_by_login(Login) ->
 	case catch db_find_one(agent, [{<<"name">>, Login}]) of
 		{ok, []} -> none;
 		{ok, P} -> spx_util:build_agent(P);
 		_ -> none
-	end;
-get_agent(id, ID) ->
+	end.
+
+get_agent_by_id(ID) ->
 	case catch db_find_one(agent, [{<<"_id">>, ID}]) of
 		{ok, []} -> none;
 		{ok, P} -> spx_util:build_agent(P);
 		_ -> none
 	end.
 
--type(profile_name() :: string()).
--spec(auth_agent/2 :: (Username :: string(), Password :: string()) -> {ok, 'deny'} | {ok, {'allow', string(), skills(), security_level(), profile_name()}} | pass).
-auth_agent(Username, Password) ->
+auth(Username, Password) ->
 	case catch db_find_one(agent, [{<<"name">>, Username}]) of
 		{ok, []} -> pass;
 		{ok, P} ->
@@ -100,17 +116,13 @@ auth_agent(Username, Password) ->
 			PntkHexBin = proplists:get_value(<<"pntk">>, P, <<>>),
 			case PntkHexBin of
 				PasswordBin ->
-					{ok, Auth} = spx_util:build_agent(P),
-					{ok, {allow, Auth#agent_auth.id,
-						Auth#agent_auth.skills,
-						Auth#agent_auth.security_level,
-						Auth#agent_auth.profile}};
-				_ -> {ok, deny}
+					spx_util:build_agent(P);
+				_ ->
+					{ok, deny}
 			end;
 		_ -> pass
 	end.
 
--spec(get_profiles/0 :: () -> {ok, [#agent_profile{}]}).
 get_profiles() ->
 	case db_find(profile, []) of
 		{ok, Props} ->
@@ -119,7 +131,6 @@ get_profiles() ->
 			{ok, []}
 	end.
 
--spec(get_profile/1 :: (Name :: string() | {id, string()} | {name, string()}) -> {ok, #agent_profile{}} | 'undefined').
 get_profile(Profile) ->
 	case catch db_find_one(profile, [{<<"name">>, Profile}]) of
 		{ok, []} -> undefined;
@@ -128,7 +139,16 @@ get_profile(Profile) ->
 		_ -> undefined
 	end.
 
--spec(get_releases/0 :: () -> {ok, [#release_opt{}]}).
+get_default_profile() ->
+	get_profile("Default").
+
+get_release(ID) ->
+	case catch db_find_one(release_opt, [{<<"_id">>, ID}]) of
+		{ok, []} -> none;
+		{ok, P} -> spx_util:build_release_opt(P);
+		_ -> none
+	end.
+
 get_releases() ->
 	case catch db_find(release_opt, []) of
 		{ok, Props} ->
@@ -155,6 +175,8 @@ db_find_one(agent, Props) ->
 	db_find_one(<<"openacdagent">>, Props);
 db_find_one(profile, Props) ->
 	db_find_one(<<"openacdagentgroup">>, Props);
+db_find_one(release_opt, Props) ->
+	db_find_one(<<"openacdreleasecode">>, Props);
 db_find_one(Type, Props) when is_binary(Type) ->
 	db_find_one([{<<"type">>, Type}|Props]).
 db_find_one(Props) when is_list(Props) ->
