@@ -40,9 +40,10 @@ start() ->
 get_action(_) ->
     %% Non-atomic
     D = [{N, lists:sort(Skls), R, G} || {state, _, G, N, R, _, Skls, _, _} <- [call_queue:dump(P) || {_, P} <- queue_manager:queues()]],
+    {ok, Qs} = call_queue_config:get_queues(),
     M = [{Q#call_queue.name, lists:sort(Q#call_queue.skills),
-        Q#call_queue.recipe, Q#call_queue.group} || Q <-
-            [call_queue_config:get_merged_queue(X#call_queue.name) || X <- call_queue_config:get_queues()]],
+        Q#call_queue.recipe, Q#call_queue.group} || {ok, Q} <-
+            [call_queue_config:get_merged_queue(X#call_queue.name) || X <- Qs]],
 
     R = lists:foldl(fun({N, _, _, _} = E, Acc) ->
         case lists:member(E, D) of

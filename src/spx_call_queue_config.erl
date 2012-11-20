@@ -20,6 +20,8 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
+-behaviour(call_queue_config).
+
 -ifdef(TEST).
 -export([reset_test_db/0]).
 -define(DB, <<"imdb_test">>).
@@ -29,18 +31,30 @@
 
 -export([
 	start/0,
+	load_queues/0
+]).
+-export([
 	get_queue/1,
+	get_merged_queue/1,
 	get_queues/0,
-
-	load_queues/0,
-
+	get_queues_by_group/1
+]).
+-export([
 	get_queue_group/1,
-	get_queue_groups/0,
-
-	get_skill/1,
+	get_default_queue_group/0,
+	get_queue_groups/0
+]).
+-export([
+	get_skill_key/1,
+	get_skill_by_key/1,
+	get_skill_by_name/1,
 	get_skills/0,
-
-	get_client/2,
+	get_skills_by_group/1
+]).
+-export([
+	get_client_by_id/1,
+	get_client_by_name/1,
+	get_default_client/0,
 	get_clients/0
 ]).
 
@@ -50,29 +64,31 @@
 
 start() ->
 	spx_db:connect(),
-
-	cpx_hooks:set_hook(spx_get_queue, get_queue, ?MODULE, get_queue, [], 200),
-	cpx_hooks:set_hook(spx_get_queues, get_queues, ?MODULE, get_queues, [], 200),
-
-	cpx_hooks:set_hook(spx_get_queue_group, get_queue_group, ?MODULE, get_queue_group, [], 200),
-	cpx_hooks:set_hook(spx_get_queue_groups, get_queue_groups, ?MODULE, get_queue_groups, [], 200),
-
-	cpx_hooks:set_hook(spx_get_skill, get_skill, ?MODULE, get_skill, [], 200),
-	cpx_hooks:set_hook(spx_get_skills, get_skills, ?MODULE, get_skills, [], 200),
-
-	cpx_hooks:set_hook(spx_get_client, get_client, ?MODULE, get_client, [], 200),
-	cpx_hooks:set_hook(spx_get_clients, get_clients, ?MODULE, get_clients, [], 200),
-
 	ok.
+
+load_queues() ->
+	{ok, Qs} = get_queues(),
+	lists:foreach(fun(Q) -> queue_manager:load_queue(Q#call_queue.name) end, Qs).
 
 get_queue(Name) ->
 	case db_find_one(queue, [{<<"name">>, Name}]) of
 		{ok, []} ->
-			noexists;
+			none;
 		{ok, Props} ->
 			spx_util:build_queue(Props);
 		_ ->
-			noexists
+			none
+	end.
+
+get_merged_queue(Name) ->
+	cpx_queue_util:simple_get_merged_queue(?MODULE, Name).
+
+get_queues_by_group(Group) ->
+	case db_find(queue, [{<<"qgrp", Group>>}]) of
+		{ok, Props} ->
+			{ok, [X || P <- Props, {ok, X} <- [spx_util:build_queue(P)]]};
+		_ ->
+			{ok, []}
 	end.
 
 get_queues() ->
@@ -83,18 +99,14 @@ get_queues() ->
 			{ok, []}
 	end.
 
-load_queues() ->
-	{ok, Qs} = get_queues(),
-	lists:foreach(fun(Q) -> queue_manager:load_queue(Q#call_queue.name) end, Qs).
-
 get_queue_group(Name) ->
 	case db_find_one(queuegroup, [{<<"name">>, Name}]) of
 		{ok, []} ->
-			noexists;
+			none;
 		{ok, Props} ->
 			spx_util:build_queue_group(Props);
 		_ ->
-			noexists
+			none
 	end.
 
 get_queue_groups() ->
@@ -105,8 +117,27 @@ get_queue_groups() ->
 			{ok, []}
 	end.
 
-get_skill(Atom) when is_atom(Atom) ->
-	case db_find_one(skill, [{<<"atom">>, atom_to_binary(Atom, utf8)}]) of
+get_default_queue_group() ->
+	get_queue_group("Default").
+
+get_skill_key(Name) ->
+	case get_skill_by_name(Name) of
+		{ok, #skill_rec{atom=Key}} -> {ok, Key};
+		_ -> none
+	end.
+
+get_skill_by_key(Key) ->
+	case db_find_one(skill, [{<<"atom">>, atom_to_binary(Key, utf8)}]) of
+		{ok, []} ->
+			noexists;
+		{ok, Props} ->
+			spx_util:build_skill(Props);
+		_ ->
+			noexists
+	end.
+
+get_skill_by_name(Name) ->
+	case db_find_one(skill, [{<<"name">>, Name}]) of
 		{ok, []} ->
 			noexists;
 		{ok, Props} ->
@@ -123,21 +154,36 @@ get_skills() ->
 			{ok, []}
 	end.
 
-get_client(Key, Val) when is_atom(Key)->
-	Cond = case Key of
-		id -> {<<"ident">>, Val};
-		label -> {<<"name">>, Val}
-	end,
+get_skills_by_group(Group) ->
+	case db_find(skill, [{<<"grpnm">>, Group}]) of
+		{ok, Props} ->
+			{ok, [X || P <- Props, {ok, X} <- [spx_util:build_skill(P)]]};
+		_ ->
+			{ok, []}
+	end.
 
-	case db_find_one(client, [Cond]) of
+get_client_by_id(Id) ->
+	case db_find_one(client, [{<<"ident">>, Id}]) of
 		{ok, []} ->
-			noexists;
+			none;
 		{ok, Props} ->
 			spx_util:build_client(Props);
 		_ ->
-			noexists
+			none
 	end.
 
+get_client_by_name(Name) ->
+	case db_find_one(client, [{<<"name">>, Name}]) of
+		{ok, []} ->
+			none;
+		{ok, Props} ->
+			spx_util:build_client(Props);
+		_ ->
+			none
+	end.
+
+get_default_client() ->
+	get_client_by_id("Default").
 
 get_clients() ->
 	case db_find(client, []) of
@@ -146,7 +192,6 @@ get_clients() ->
 		_ ->
 			{ok, []}
 	end.
-
 
 db_find(Type, Props) when is_atom(Type) ->
 	db_find(as_type(Type), Props);

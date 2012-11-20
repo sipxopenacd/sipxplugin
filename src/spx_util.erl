@@ -520,10 +520,10 @@ build_agent_test_() ->
 			])),
 
 		%% security level
-		?_assertMatch({ok, #agent_auth{securitylevel=agent}}, Build([])),
-		?_assertMatch({ok, #agent_auth{securitylevel=admin}},
+		?_assertMatch({ok, #agent_auth{security_level=agent}}, Build([])),
+		?_assertMatch({ok, #agent_auth{security_level=admin}},
 			Build([{<<"scrty">>,<<"ADMIN">>}])),
-		?_assertMatch({ok, #agent_auth{securitylevel=supervisor}},
+		?_assertMatch({ok, #agent_auth{security_level=supervisor}},
 			Build([{<<"scrty">>,<<"SUPERVISOR">>}])),
 
 		%% profile
