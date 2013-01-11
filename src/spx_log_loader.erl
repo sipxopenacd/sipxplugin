@@ -118,7 +118,7 @@ good_jprop_to_config_test() ->
         \"lgfile\" : \"/opt/OpenACD/log/full.log\",
         \"type\" : \"openacdlogconfigcommand\"
     }">>,
-    {struct, JProp} = mochijson2:decode(JSON),
+    {struct, JProp} = ejrpc2_json:decode(JSON),
     ?assertEqual({ok, {debug, "/opt/OpenACD/log/full.log"}}, jprop_to_config(JProp)).
 
 get_db_config_test_() ->
@@ -141,7 +141,7 @@ get_db_config_test_() ->
     end,
     fun() ->
         JSON = <<"{\"type\" : \"openacdlogconfigcommand\"}">>,
-        {struct, JProp} = mochijson2:decode(JSON),
+        {struct, JProp} = ejrpc2_json:decode(JSON),
 
         M = mongoapi:new(spx, ?DB),
         F = fun([]) -> none; (_) -> something end,
