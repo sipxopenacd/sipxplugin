@@ -13,7 +13,7 @@
 
 -module(spx_agent_auth).
 
--include_lib("oacd_core/include/agent.hrl").
+-include_lib("openacd/include/agent.hrl").
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").

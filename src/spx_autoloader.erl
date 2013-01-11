@@ -14,10 +14,10 @@
 -module(spx_autoloader).
 -author("eZuce").
 
--include_lib("oacd_core/include/log.hrl").
--include_lib("oacd_core/include/call.hrl").
--include_lib("oacd_core/include/cpx.hrl").
--include_lib("oacd_core/include/agent.hrl").
+-include_lib("openacd/include/log.hrl").
+-include_lib("openacd/include/call.hrl").
+-include_lib("openacd/include/cpx.hrl").
+-include_lib("openacd/include/agent.hrl").
 
 %% API
 -export([

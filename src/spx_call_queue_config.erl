@@ -13,8 +13,8 @@
 
 -module(spx_call_queue_config).
 
--include_lib("oacd_core/include/queue.hrl").
--include_lib("oacd_core/include/call.hrl").
+-include_lib("openacd/include/queue.hrl").
+-include_lib("openacd/include/call.hrl").
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").

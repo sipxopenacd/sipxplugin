@@ -14,11 +14,11 @@
 -module(spx_util).
 -author("eZuce").
 
--include_lib("oacd_core/include/agent.hrl").
--include_lib("oacd_core/include/queue.hrl").
--include_lib("oacd_core/include/call.hrl").
+-include_lib("openacd/include/agent.hrl").
+-include_lib("openacd/include/queue.hrl").
+-include_lib("openacd/include/call.hrl").
 
--include_lib("oacd_core/include/log.hrl").
+-include_lib("openacd/include/log.hrl").
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").

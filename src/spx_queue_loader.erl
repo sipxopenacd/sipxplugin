@@ -26,8 +26,8 @@
 -define(DB, <<"imdb">>).
 -endif.
 
--include_lib("oacd_core/include/cpx.hrl").
--include_lib("oacd_core/include/queue.hrl").
+-include_lib("openacd/include/cpx.hrl").
+-include_lib("openacd/include/queue.hrl").
 
 start() ->
     spx_db:connect(),
