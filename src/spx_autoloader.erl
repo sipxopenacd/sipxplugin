@@ -14,7 +14,6 @@
 -module(spx_autoloader).
 -author("eZuce").
 
--include_lib("openacd/include/log.hrl").
 -include_lib("openacd/include/call.hrl").
 -include_lib("openacd/include/cpx.hrl").
 -include_lib("openacd/include/agent.hrl").
@@ -173,7 +172,7 @@ handle_info(ping, State) ->
 %% Function: terminate(Reason, State) -> void()
 %%--------------------------------------------------------------------
 terminate(Reason, _State) ->
-	?NOTICE("termination cause:  ~p", [Reason]),
+	lager:notice("termination cause:  ~p", [Reason]),
     ok.
 
 %%--------------------------------------------------------------------
@@ -189,7 +188,7 @@ code_change(_OldVsn, State, _Extra) ->
 autoload(State) ->
 	NewMods = lists:map(
 		fun({Mod = {Name, ActionFun, LoadFun, UnloadFun, ReloadFun}, Conf}) ->
-			%?DEBUG("Checking autoload of ~p with config: ~p", [Name, Conf]),
+			%lager:debug("Checking autoload of ~p with config: ~p", [Name, Conf]),
 			NewConf = case catch ActionFun(Conf) of
 				{load, NConf} ->
 					try_do(Name, load, LoadFun, Conf, NConf);
@@ -200,7 +199,7 @@ autoload(State) ->
 				none ->
 					Conf;
 				{'EXIT', Err} ->
-					?WARNING("Error occured getting autoload action: ~p", [Err]),
+					lager:warning("Error occured getting autoload action: ~p", [Err]),
 					Conf
 			end,
 			{Mod, NewConf}
@@ -208,13 +207,13 @@ autoload(State) ->
 	State#state{mods = NewMods}.
 
 try_do(Name, Action, Fun, Conf, NConf) ->
-	?DEBUG("~p doing ~p with ~p", [Name, Action, NConf]),
+	lager:debug("~p doing ~p with ~p", [Name, Action, NConf]),
 	case catch Fun(NConf) of
 		{'EXIT', Err} ->
-			?WARNING("Error occured while ~p ~p: ~p", [Name, Action, Err]),
+			lager:warning("Error occured while ~p ~p: ~p", [Name, Action, Err]),
 			Conf;
 		_ ->
-			?INFO("~p did ~p", [Name, Action]),
+			lager:info("~p did ~p", [Name, Action]),
 			NConf
 	end.
 

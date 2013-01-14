@@ -18,7 +18,6 @@
 -include_lib("openacd/include/queue.hrl").
 -include_lib("openacd/include/call.hrl").
 
--include_lib("openacd/include/log.hrl").
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
@@ -150,7 +149,7 @@ build_agent([{<<"cnt">>, SipURI}|T], Acc) ->
 
 %% Unknown
 build_agent([_Prop|T], Acc) ->
-	% ?WARNING("Unkown agent_auth property: ~p", [_Prop]),
+	% lager:warning("Unkown agent_auth property: ~p", [_Prop]),
 	build_agent(T, Acc).
 
 
@@ -293,7 +292,7 @@ build_recipe_step([{<<"actn">>, Action}|T], Acc) when is_list(Action) ->
 				{ok, Op} ->
 					build_recipe_step(T, Acc#spx_recipe{operations=[Op]});
 				{error, Err} ->
-					?WARNING("Error reading action: ~p: ~p", [Action, Err]),
+					lager:warning("Error reading action: ~p: ~p", [Action, Err]),
 					build_recipe_step(T, Acc)
 			end
 	end;
@@ -312,7 +311,7 @@ build_recipe_conds([Cond|T], Acc) ->
 	Acc1 = case read_recipe_cond(proplists:get_value(<<"cndt">>, Cond), Cond) of
 		{ok, C} -> [C|Acc];
 		{error, Err} ->
-			?WARNING("Invalid condition: ~p - ~p", [Cond, Err]),
+			lager:warning("Invalid condition: ~p - ~p", [Cond, Err]),
 			Acc
 	end,
 	build_recipe_conds(T, Acc1).

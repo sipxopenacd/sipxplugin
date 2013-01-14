@@ -6,7 +6,7 @@
 	spx_autoloader
 %	integration
 	]},
-{applications, [kernel, stdlib, erlmongo]},
+{applications, [kernel, stdlib, lager, erlmongo]},
 {mod, {sipxplugin_app, []}},
 {start_phases, []}
 ]}.
