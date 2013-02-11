@@ -63,6 +63,7 @@
 -endif.
 
 -define(COLL, <<"entity">>).
+-define(DEFAULT_AUTOLOADS, [spx_freeswitchmedia_loader, spx_queue_loader]).
 
 %% @doc Start linked with given options.
 -spec(start_link/1 :: (Options :: any()) -> {'ok', pid()}).
@@ -109,9 +110,10 @@ get_states() ->
 %% Function: init(Args) -> {ok, State} |
 %%--------------------------------------------------------------------
 init(Opts) ->
-	add_autoloads(),
-
 	Interval = proplists:get_value(interval, Opts, ?DEFAULT_INTERVAL),
+	AutoLoads = proplists:get_value(autoloads, Opts, ?DEFAULT_AUTOLOADS),
+
+	add_autoloads(AutoLoads),
 
 	Timer = timer:send_interval(Interval, ping),
 
@@ -217,14 +219,8 @@ try_do(Name, Action, Fun, Conf, NConf) ->
 			NConf
 	end.
 
-add_autoloads() ->
-	% spx_agentconfig_loader:start(),
-	% spx_log_loader:start(),
-	spx_freeswitchmedia_loader:start(),
-	% spx_webmgt_loader:start(),
-	% spx_agentweb_loader:start(),
-	spx_queue_loader:start(),
-
+add_autoloads(Mods) ->
+	lists:foreach(fun(M) -> M:start() end, Mods),
 	ok.
 
 -ifdef(TEST).
@@ -244,7 +240,7 @@ add_mod_with_action(A) ->
 ping_test_() ->
 	{foreach,
 		fun() ->
-			spx_autoloader:start_link(),
+			spx_autoloader:start_link([{autoloads, []}]),
 
 			meck:new(fke),
 			meck:expect(fke, load, fun(_) -> ok end),
