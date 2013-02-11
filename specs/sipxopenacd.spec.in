@@ -1,0 +1,74 @@
+%global appname @APP_NAME@
+%global debug_package %{nil}
+%global upstream sipxopenacd
+
+Name:		@PACKAGE_NAME@
+Version:	@PACKAGE_VERSION@
+Release:	%{?buildno:%buildno}%{!?buildno:1}
+
+Summary:	OpenACD sipXecs integration
+License:	LGPL
+Group:		Productivity/Telephony/SIP/Servers
+Vendor:		SIPFoundry
+Packager:	SIPfoundry <sipx-dev@sipfoundry.org>
+URL:		http://www.sipfoundry.org/
+
+Source:		%{name}-%{version}.tar.gz
+BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
+
+Requires:	erlang-%{appname}
+
+%package -n erlang-%{appname}
+Group: Development/Libraries
+Vendor: SIPFoundry
+Summary: Erlang library for sipxopenacd
+BuildRequires:	erlang-rebar
+BuildRequires:	erlang-eunit
+BuildRequires:	erlang-lager
+BuildRequires:	erlang-ejrpc2
+BuildRequires:	erlang-openacd
+BuildRequires:	erlmongo
+Requires:	erlang-erts%{?_isa} >= R15B
+Requires:	erlang-kernel%{?_isa}
+Requires:	erlang-stdlib%{?_isa} >= R15B
+Requires:	erlang-lager
+Requires:	erlang-ejrpc2
+Requires:	erlang-openacd
+Requires:	erlmongo
+
+%description
+OpenACD integration for sipXecs
+
+%description -n erlang-%{appname}
+Erlang library for sipxopenacd
+
+%prep
+%setup -n %{name}-%{version}
+
+%build
+make
+
+%install
+rm -rf %{buildroot}
+mkdir -p %{buildroot}%{_libdir}/erlang/lib/%{appname}-%{version}/ebin
+install -m 644 ebin/%{appname}.app %{buildroot}%{_libdir}/erlang/lib/%{appname}-%{version}/ebin
+install -m 644 ebin/*.beam %{buildroot}%{_libdir}/erlang/lib/%{appname}-%{version}/ebin
+
+%clean
+rm -rf %{buildroot}
+
+%check
+make check
+
+%files
+
+%files -n erlang-%{appname}
+%dir %{_libdir}/erlang/lib/%{appname}-%{version}
+%dir %{_libdir}/erlang/lib/%{appname}-%{version}/ebin
+%{_libdir}/erlang/lib/%{appname}-%{version}/ebin/%{appname}.app
+%{_libdir}/erlang/lib/%{appname}-%{version}/ebin/*.beam
+
+
+%changelog
+* Thu Feb 10 2013 Jan Vincent Liwanag
+- New v2 release

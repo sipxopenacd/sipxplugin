@@ -1,0 +1,11 @@
+{application, @APP_NAME@,
+[{description, "OpenACD and sipXecs integration"},
+{vsn, "@PACKAGE_VSN@"},
+{registered, [
+	oacd_spx_sup,
+	spx_autoloader
+	]},
+{applications, [kernel, stdlib, lager, erlmongo, ejrpc2, openacd]},
+{mod, {oacd_spx_app, []}},
+{start_phases, []}
+]}.

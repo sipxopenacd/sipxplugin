@@ -1,4 +1,4 @@
--module(sipxplugin_sup).
+-module(oacd_spx_sup).
 
 -behaviour(supervisor).
 

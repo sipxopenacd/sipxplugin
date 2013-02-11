@@ -11,7 +11,7 @@
 %% FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
 %% details.
 
--module(sipxplugin_app).
+-module(oacd_spx_app).
 -author("eZuce").
 
 -behavior(application).
@@ -20,7 +20,7 @@
 start(_Type, _Args) ->
 	application:start(lager),
 	application:start(erlmongo),
-	sipxplugin_sup:start_link().
+	oacd_spx_sup:start_link().
 
 
 stop(_State) ->

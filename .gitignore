@@ -2,3 +2,6 @@ ebin/*
 .eunit/*
 etc/*
 deps/*
+specs/sipxopenacd.spec
+rpms/*
+sipxopenacd-*.tar.gz
