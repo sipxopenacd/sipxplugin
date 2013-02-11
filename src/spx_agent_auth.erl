@@ -19,12 +19,12 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
--ifdef(TEST).
--export([reset_test_db/0]).
--define(DB, <<"imdb_test">>).
--else.
+% -ifdef(TEST).
+% -export([reset_test_db/0]).
+% -define(DB, <<"imdb_test">>).
+% -else.
 -define(DB, <<"imdb">>).
--endif.
+% -endif.
 
 -behaviour(agent_auth).
 
@@ -190,139 +190,139 @@ db_find_one(Props) when is_list(Props) ->
 %%--------------------------------------------------------------------
 
 
-start_test_() ->
-	{setup, fun() ->
-		cpx_hooks:start_link(),
-		spx_agent_auth:start()
-	end, [
-		?_assert(has_hook(spx_get_agents, get_agents)),
-		?_assert(has_hook(spx_get_agents_by_profile, get_agents_by_profile)),
-		?_assert(has_hook(spx_get_agent, get_agent)),
-		?_assert(has_hook(spx_auth_agent, auth_agent)),
-		?_assert(has_hook(spx_get_profiles, get_profiles)),
-		?_assert(has_hook(spx_get_profile, get_profile))
-	]}.
+% start_test_() ->
+% 	{setup, fun() ->
+% 		cpx_hooks:start_link(),
+% 		spx_agent_auth:start()
+% 	end, [
+% 		?_assert(has_hook(spx_get_agents, get_agents)),
+% 		?_assert(has_hook(spx_get_agents_by_profile, get_agents_by_profile)),
+% 		?_assert(has_hook(spx_get_agent, get_agent)),
+% 		?_assert(has_hook(spx_auth_agent, auth_agent)),
+% 		?_assert(has_hook(spx_get_profiles, get_profiles)),
+% 		?_assert(has_hook(spx_get_profile, get_profile))
+% 	]}.
 
-defaults_test_() ->
-	{setup, fun() ->
-		meck:new(mongoapi),
-		meck:expect(mongoapi, new, 2, {mongoapi, spx, <<"imdb_test">>}),
-		meck:expect(mongoapi, findOne, 3, not_connected),
-		meck:expect(mongoapi, find, 6, not_connected)
-	end,
-	fun(_) -> meck:unload(mongoapi) end,
-	[?_assertEqual({ok, []}, spx_agent_auth:get_agents()),
-	?_assertEqual({ok, []}, spx_agent_auth:get_agents_by_profile("prof")),
-	?_assertEqual(none, spx_agent_auth:get_agent(login, "login")),
-	?_assertEqual(none, spx_agent_auth:get_agent(id, "id")),
-	?_assertEqual(pass, spx_agent_auth:auth_agent("u", "p")),
-	?_assertEqual({ok, []}, spx_agent_auth:get_profiles()),
-	?_assertEqual(undefined, spx_agent_auth:get_profile("prof")),
-	?_assertEqual({ok, []}, spx_agent_auth:get_releases())
-	]}.
+% defaults_test_() ->
+% 	{setup, fun() ->
+% 		meck:new(mongoapi),
+% 		meck:expect(mongoapi, new, 2, {mongoapi, spx, <<"imdb_test">>}),
+% 		meck:expect(mongoapi, findOne, 3, not_connected),
+% 		meck:expect(mongoapi, find, 6, not_connected)
+% 	end,
+% 	fun(_) -> meck:unload(mongoapi) end,
+% 	[?_assertEqual({ok, []}, spx_agent_auth:get_agents()),
+% 	?_assertEqual({ok, []}, spx_agent_auth:get_agents_by_profile("prof")),
+% 	?_assertEqual(none, spx_agent_auth:get_agent(login, "login")),
+% 	?_assertEqual(none, spx_agent_auth:get_agent(id, "id")),
+% 	?_assertEqual(pass, spx_agent_auth:auth_agent("u", "p")),
+% 	?_assertEqual({ok, []}, spx_agent_auth:get_profiles()),
+% 	?_assertEqual(undefined, spx_agent_auth:get_profile("prof")),
+% 	?_assertEqual({ok, []}, spx_agent_auth:get_releases())
+% 	]}.
 
-integ_get_agents_test_() ->
-	{setup, fun reset_test_db/0, fun stop_test_db/1,
-		[?_assertMatch({ok, [
-			#agent_auth{id="agent1", login="foo", securitylevel=admin},
-			#agent_auth{id="agent2", login="bar", securitylevel=agent},
-			#agent_auth{id="agent3", login="baz", securitylevel=supervisor}
-		]}, spx_agent_auth:get_agents())]
-	}.
+% integ_get_agents_test_() ->
+% 	{setup, fun reset_test_db/0, fun stop_test_db/1,
+% 		[?_assertMatch({ok, [
+% 			#agent_auth{id="agent1", login="foo", security_level=admin},
+% 			#agent_auth{id="agent2", login="bar", security_level=agent},
+% 			#agent_auth{id="agent3", login="baz", security_level=supervisor}
+% 		]}, spx_agent_auth:get_agents())]
+% 	}.
 
-integ_get_agents_by_profile_test_() ->
-	{setup, fun reset_test_db/0, fun stop_test_db/1,
-		[?_assertMatch({ok, []}, spx_agent_auth:get_agents_by_profile("nada")),
-		?_assertMatch({ok, [
-			#agent_auth{id="agent1", login="foo", securitylevel=admin},
-			#agent_auth{id="agent3", login="baz", securitylevel=supervisor}
-		]}, spx_agent_auth:get_agents_by_profile("foobaz"))]
-	}.
+% integ_get_agents_by_profile_test_() ->
+% 	{setup, fun reset_test_db/0, fun stop_test_db/1,
+% 		[?_assertMatch({ok, []}, spx_agent_auth:get_agents_by_profile("nada")),
+% 		?_assertMatch({ok, [
+% 			#agent_auth{id="agent1", login="foo", security_level=admin},
+% 			#agent_auth{id="agent3", login="baz", security_level=supervisor}
+% 		]}, spx_agent_auth:get_agents_by_profile("foobaz"))]
+% 	}.
 
-integ_get_agent_test_() ->
-	{setup, fun reset_test_db/0, fun stop_test_db/1,
-		[?_assertMatch(none, spx_agent_auth:get_agent(login, "nada")),
-		?_assertMatch(none, spx_agent_auth:get_agent(id, "noone")),
+% integ_get_agent_test_() ->
+% 	{setup, fun reset_test_db/0, fun stop_test_db/1,
+% 		[?_assertMatch(none, spx_agent_auth:get_agent(login, "nada")),
+% 		?_assertMatch(none, spx_agent_auth:get_agent(id, "noone")),
 
-		?_assertMatch({ok,
-			#agent_auth{id="agent1", login="foo", securitylevel=admin}},
-			spx_agent_auth:get_agent(login, "foo")),
-		?_assertMatch({ok,
-			#agent_auth{id="agent1", login="foo", securitylevel=admin}},
-			spx_agent_auth:get_agent(id, "agent1"))
-		]
-	}.
+% 		?_assertMatch({ok,
+% 			#agent_auth{id="agent1", login="foo", security_level=admin}},
+% 			spx_agent_auth:get_agent(login, "foo")),
+% 		?_assertMatch({ok,
+% 			#agent_auth{id="agent1", login="foo", security_level=admin}},
+% 			spx_agent_auth:get_agent(id, "agent1"))
+% 		]
+% 	}.
 
-integ_auth_agent_test_() ->
-	{setup, fun reset_test_db/0, fun stop_test_db/1,
-		[?_assertMatch(pass, spx_agent_auth:auth_agent("not", "here")),
-		?_assertMatch({ok, deny}, spx_agent_auth:auth_agent("foo", "wrongpass")),
-		?_assertMatch({ok,
-			{allow, "agent1", _, admin, "foobaz"}}, %% TODO fill up
-			spx_agent_auth:auth_agent("foo", "foosecret"))
-		]
-	}.
+% integ_auth_agent_test_() ->
+% 	{setup, fun reset_test_db/0, fun stop_test_db/1,
+% 		[?_assertMatch(pass, spx_agent_auth:auth_agent("not", "here")),
+% 		?_assertMatch({ok, deny}, spx_agent_auth:auth_agent("foo", "wrongpass")),
+% 		?_assertMatch({ok,
+% 			{allow, "agent1", _, admin, "foobaz"}}, %% TODO fill up
+% 			spx_agent_auth:auth_agent("foo", "foosecret"))
+% 		]
+% 	}.
 
-integ_get_profiles_test_() ->
-	{setup, fun reset_test_db/0, fun stop_test_db/1,
-		[?_assertMatch({ok, [
-			#agent_profile{id="group1"},
-			#agent_profile{id="group2"}]},
-			spx_agent_auth:get_profiles())
-		]
-	}.
+% integ_get_profiles_test_() ->
+% 	{setup, fun reset_test_db/0, fun stop_test_db/1,
+% 		[?_assertMatch({ok, [
+% 			#agent_profile{id="group1"},
+% 			#agent_profile{id="group2"}]},
+% 			spx_agent_auth:get_profiles())
+% 		]
+% 	}.
 
-integ_get_profile_test_() ->
-	{setup, fun reset_test_db/0, fun stop_test_db/1,
-		[?_assertMatch(undefined, spx_agent_auth:get_profile("noprofile")),
-		?_assertMatch({ok, #agent_profile{id="group2"}},
-			spx_agent_auth:get_profile("foobaz"))]
-	}.
+% integ_get_profile_test_() ->
+% 	{setup, fun reset_test_db/0, fun stop_test_db/1,
+% 		[?_assertMatch(undefined, spx_agent_auth:get_profile("noprofile")),
+% 		?_assertMatch({ok, #agent_profile{id="group2"}},
+% 			spx_agent_auth:get_profile("foobaz"))]
+% 	}.
 
-integ_get_releases_test_() ->
-	{setup, fun reset_test_db/0, fun stop_test_db/1,
-		[?_assertMatch({ok, [
-			#release_opt{id="opt1", label="in a meeting", bias= -1},
-			#release_opt{id="opt2", label="busy", bias=0}
-			]}, spx_agent_auth:get_releases())]
-	}.
+% integ_get_releases_test_() ->
+% 	{setup, fun reset_test_db/0, fun stop_test_db/1,
+% 		[?_assertMatch({ok, [
+% 			#release_opt{id="opt1", label="in a meeting", bias= -1},
+% 			#release_opt{id="opt2", label="busy", bias=0}
+% 			]}, spx_agent_auth:get_releases())]
+% 	}.
 
-%% Test helpers
+% %% Test helpers
 
-has_hook(Name, Hook) ->
-	lists:member({Name, ?MODULE, Hook, [], 200},
-		cpx_hooks:get_hooks(Hook)).
+% has_hook(Name, Hook) ->
+% 	lists:member({Name, ?MODULE, Hook, [], 200},
+% 		cpx_hooks:get_hooks(Hook)).
 
-reset_test_db() ->
-	PrivDir = case code:priv_dir(sipxplugin) of
-		{error, _} ->
-			filename:join([filename:dirname(code:which(spx_agent_auth)),
-				"..", "priv"]);
-		Dir -> Dir
-	end,
-	Path = filename:join(PrivDir, "test_entries.json"),
+% reset_test_db() ->
+% 	PrivDir = case code:priv_dir(sipxplugin) of
+% 		{error, _} ->
+% 			filename:join([filename:dirname(code:which(spx_agent_auth)),
+% 				"..", "priv"]);
+% 		Dir -> Dir
+% 	end,
+% 	Path = filename:join(PrivDir, "test_entries.json"),
 
-	{ok, Bin} = file:read_file(Path),
-	{struct, [{"entries", {array, Entries}}]} = mochijson:decode(Bin),
+% 	{ok, Bin} = file:read_file(Path),
+% 	{[{<<"entries">>, Entries}]} = ejrpc2_json:decode(Bin),
 
-	% mongodb:start(),
-	mongodb:singleServer(spx),
-	mongodb:connect(spx),
+% 	% mongodb:start(),
+% 	mongodb:singleServer(spx),
+% 	mongodb:connect(spx),
 
-	DB = mongoapi:new(spx,?DB),
-	DB:set_encode_style(default),
+% 	DB = mongoapi:new(spx,?DB),
+% 	DB:set_encode_style(default),
 
-	DB:dropDatabase(),
-	lists:foreach(fun({struct, Props}) ->
-		Id = proplists:get_value("_id", Props),
-		P1 = proplists:delete("_id", Props),
-		P2 = [{<<"_id">>, Id}| P1],
-		DB:save("entity", P2) end,
-	Entries).
+% 	DB:dropDatabase(),
+% 	lists:foreach(fun({struct, Props}) ->
+% 		Id = proplists:get_value("_id", Props),
+% 		P1 = proplists:delete("_id", Props),
+% 		P2 = [{<<"_id">>, Id}| P1],
+% 		DB:save("entity", P2) end,
+% 	Entries).
 
 
-stop_test_db(_) ->
-	% catch mongodb:stop(),
-	ok.
+% stop_test_db(_) ->
+% 	% catch mongodb:stop(),
+% 	ok.
 
 -endif.
