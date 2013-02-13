@@ -1,6 +1,5 @@
 ebin/*
 .eunit/*
-etc/*
 deps/*
 specs/sipxopenacd.spec
 rpms/*

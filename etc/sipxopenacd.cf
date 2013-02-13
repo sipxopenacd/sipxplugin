@@ -1,0 +1,139 @@
+# Copyright (c) 2013 eZuce, Inc. All rights reserved.
+# Contributed to SIPfoundry under a Contributor Agreement
+
+# This software is free software; you can redistribute it and/or modify it under
+# the terms of the Affero General Public License (AGPL) as published by the
+# Free Software Foundation; either version 3 of the License, or (at your option)
+# any later version.
+
+# This software is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+# details.
+
+#
+# sipXopenacd configuration and process management
+#
+
+bundle agent sipxopenacd {
+  methods:
+    sipxopenacd::
+      "any" usebundle => "sipxopenacd_config";
+    any::
+      "any" usebundle => "sipxopenacd_running";
+}
+
+bundle agent sipxopenacd_config {
+  files:
+    any::
+      # symlink service script mostly so it can be used registered to system
+      # when system starts in rh_chkconfig_status but also for user convienience
+      "$(sipx.SIPX_SERVICEDIR)/openacd"
+        comment => "install openacd config $(this.promiser)",
+        perms => m("755"),
+        link_from => ln_s("$(sipx.OPENACD_BINDIR)/openacd");
+
+      # regular configs
+      "$(sipx.OPENACD_CONFDIR)/env.config"
+        comment => "install openacd config $(this.promiser)",
+        create => "true",
+        perms => m("644"),
+        edit_line => sipxopenacd_env_config;
+
+      "$(sipx.OPENACD_CONFDIR)/sys.config"
+        comment => "install openacd config $(this.promiser)",
+        create => "true",
+        perms => m("644"),
+        edit_line => sipxopenacd_sys_config,
+        classes => if_repaired("restart_sipxopenacd");
+}
+
+bundle edit_line sipxopenacd_env_config() {
+  insert_lines:
+    any::
+"
+# Erlang Node Name
+ERL_NAME=\"openacd\"
+
+# Erlang Cookie
+ERL_COOKIE=\"ClueCon\"
+
+# ERL_LIBS=
+
+# Config file
+# OA_CONFIG_PATH=$(sipx.OPENACD_CONFDIR)/sys.config
+
+# Log directory
+# OA_LOG_DIR=$(sipx.OPENACD_LOGDIR)"
+;
+
+  delete_lines:
+    any::
+      ".*";
+}
+
+bundle edit_line sipxopenacd_sys_config() {
+  insert_lines:
+    any::
+"
+[{openacd, [
+	%% Add plugins here
+	{plugins, [oacd_freeswitch, oacd_web, oacd_spx]}
+	, {agent_auth_storage, spx_agent_auth}
+	, {call_queue_config_storage, spx_call_queue_config}
+]},
+%% Application-specific configuration here
+{oacd_freeswitch, [
+	{freeswitch_node, 'freeswitch@127.0.0.1'},
+	{cpx_managed, true}
+]},
+{lager, [
+	{handlers, [
+		{lager_console_backend, [info, true]},
+		{lager_file_backend, [
+			{\"$(sipx.OPENACD_LOGDIR)/error.log\", error, 10485760, \"$D0\", 5},
+			{\"$(sipx.OPENACD_LOGDIR)/console.log\", $(sipx.OPENACD_LOG_LEVEL), 10485760, \"$D0\", 5}
+		]}
+	]}
+]}
+]."
+;
+
+  delete_lines:
+    any::
+      ".*";
+}
+
+bundle agent sipxopenacd_running {
+  vars:
+    any::
+      "service_command" string => ".*\s(/?)/var/openacd/run\s.*";
+
+  classes:
+    any::
+      "has_service_script" expression => fileexists("$(sipx.SIPX_SERVICEDIR)/openacd");
+
+  methods:
+    any::
+      "any" usebundle => find_service_by_command("$(service_command)","sipxopenacd_running","openacd");
+    !src.sipxopenacd.has_service_script::
+      "any" usebundle => rh_chkconfig_status("openacd on");
+    !src.!sipxopenacd.has_service_script::
+      "any" usebundle => rh_chkconfig_status("openacd off");
+
+  commands:
+    (!sipxopenacd|stop_sipxecs).sipxopenacd_running::
+      "$(sipx.SIPX_SERVICEDIR)/openacd"
+        comment => "stop openacd",
+        args => "stop";
+
+    sipxopenacd.!sipxopenacd_running::
+      "$(sipx.SIPX_SERVICEDIR)/openacd"
+        comment => "start openacd",
+        args => "start";
+
+    sipxopenacd.sipxopenacd_running.(restart_sipxecs|restart_sipxopenacd)::
+      "$(sipx.SIPX_SERVICEDIR)/openacd"
+        comment => "restart openacd",
+        args => "restart";
+}
