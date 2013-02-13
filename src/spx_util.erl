@@ -465,7 +465,7 @@ build_skill([{<<"atom">>, Atm}|T], Acc) ->
 	build_skill(T, Acc#skill_rec{atom = binary_to_atom(Atm, utf8)});
 build_skill([{<<"name">>, Name}|T], Acc) ->
 	build_skill(T, Acc#skill_rec{name = binary_to_list(Name)});
-build_skill([{<<"dscr">>, Desc}|T], Acc) ->
+build_skill([{<<"dscr">>, Desc}|T], Acc) when is_binary(Desc) ->
 	build_skill(T, Acc#skill_rec{description = binary_to_list(Desc)});
 build_skill([{<<"grpnm">>, Group}|T], Acc) ->
 	build_skill(T, Acc#skill_rec{group = binary_to_list(Group)});
