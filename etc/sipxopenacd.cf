@@ -78,8 +78,10 @@ bundle edit_line sipxopenacd_sys_config() {
     any::
 "
 [{openacd, [
+  {rsakey, \"$(sipx.OPENACD_KEYDIR)/openacd.key\"}
+
 	%% Add plugins here
-	{plugins, [oacd_freeswitch, oacd_web, oacd_spx]}
+	, {plugins, [oacd_freeswitch, oacd_web, oacd_spx]}
 	, {agent_auth_storage, spx_agent_auth}
 	, {call_queue_config_storage, spx_call_queue_config}
 ]},
