@@ -39,6 +39,7 @@ bundle agent sipxopenacd_config {
         create => "true",
         perms => m("644"),
         edit_line => sipxopenacd_env_config;
+        classes => if_repaired("restart_sipxopenacd");
 
       "$(sipx.OPENACD_CONFDIR)/sys.config"
         comment => "install openacd config $(this.promiser)",
