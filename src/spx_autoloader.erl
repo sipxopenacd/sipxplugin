@@ -63,7 +63,7 @@
 -endif.
 
 -define(COLL, <<"entity">>).
--define(DEFAULT_AUTOLOADS, [spx_freeswitchmedia_loader, spx_queue_loader]).
+-define(DEFAULT_AUTOLOADS, [spx_freeswitchmedia_loader, spx_queue_loader, spx_cdr_mongo_loader]).
 
 %% @doc Start linked with given options.
 -spec(start_link/1 :: (Options :: any()) -> {'ok', pid()}).
