@@ -23,7 +23,7 @@ code_change(_Oldvsn, State, _Extra) ->
 	{ok, State}.
 
 dump(AgState, State) when is_record(AgState, agent_state) ->
-	lager:info("ag state: ~p", [AgState]),
+	lager:debug("ag state: ~p", [AgState]),
 	{ok, State};
 dump(CDR, State) when is_record(CDR, cdr_rec) ->
 	Call = CDR#cdr_rec.media,
@@ -33,6 +33,9 @@ dump(CDR, State) when is_record(CDR, cdr_rec) ->
 	Agent = find_agent(Summary),
 	Queue = find_queue(Summary),
 
+	%% WARN: might not be the active profile when the call was made
+	Profile = get_profile(Agent),
+
 	CallID = Call#call.id,
 	Client = (Call#call.client)#client.label,
 
@@ -41,6 +44,7 @@ dump(CDR, State) when is_record(CDR, cdr_rec) ->
 	Entry = [
 		{<<"vsn">>, <<"0.1.0">>},
 		{<<"agent">>, Agent},
+		{<<"profile">>, Profile},
 		{<<"queue">>, Queue},
 		{<<"client">>, Client},
 		{<<"callid">>, CallID},
@@ -75,6 +79,14 @@ find_queue(Summary) ->
 		_ ->
 			null
 	end.
+
+get_profile(null) -> null;
+get_profile(Ag) ->
+	case catch agent_auth:get_agent_by_login(Ag) of
+		{ok, #agent_auth{profile=P}} -> P;
+		_ -> null
+	end.
+
 
 as_erl_now(S) ->
 	{S div 1000000, S rem 1000000, 0}.
