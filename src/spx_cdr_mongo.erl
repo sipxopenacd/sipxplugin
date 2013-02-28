@@ -13,8 +13,12 @@
 	rollback/1
 ]).
 
+-record(state, {
+	agent_cache = dict:new()
+}).
+
 init(_Opts) ->
-	{ok, []}.
+	{ok, #state{}}.
 
 terminate(_Reason, _State) ->
 	ok.
@@ -23,8 +27,35 @@ code_change(_Oldvsn, State, _Extra) ->
 	{ok, State}.
 
 dump(AgState, State) when is_record(AgState, agent_state) ->
-	lager:debug("ag state: ~p", [AgState]),
-	{ok, State};
+
+	#agent_state{
+		id = AgentId,
+		agent = Agent,
+		state = Ztate,
+		oldstate = OldZtate,
+		start = Start,
+		ended = End,
+		profile = Profile
+	} = AgState,
+
+	Cache = State#state.agent_cache,
+	{Clients, Cache1} = get_clients(Agent, Cache),
+
+	Entry = [
+		{<<"vsn">>, <<"0.1.0">>},
+		{<<"agent">>, fx(Agent)},
+		{<<"agent_id">>, fx(AgentId)},
+		{<<"profile">>, fx(Profile)},
+		{<<"clients">>, {array, Clients}},
+		{<<"old_state">>, fx(OldZtate)},
+		{<<"state">>, fx(Ztate)},
+		{<<"start">>, as_erl_now(Start)},
+		{<<"end">>, as_erl_now(End)}
+	],
+
+	try_insert(<<"asl">>, Entry),
+
+	{ok, State#state{agent_cache=Cache1}};
 dump(CDR, State) when is_record(CDR, cdr_rec) ->
 	Call = CDR#cdr_rec.media,
 	Summary = CDR#cdr_rec.summary,
@@ -43,25 +74,26 @@ dump(CDR, State) when is_record(CDR, cdr_rec) ->
 
 	Entry = [
 		{<<"vsn">>, <<"0.1.0">>},
-		{<<"agent">>, Agent},
-		{<<"profile">>, Profile},
-		{<<"queue">>, Queue},
-		{<<"client">>, Client},
-		{<<"callid">>, CallID},
+		{<<"agent">>, fx(Agent)},
+		{<<"profile">>, fx(Profile)},
+		{<<"queue">>, fx(Queue)},
+		{<<"client">>, fx(Client)},
+		{<<"callid">>, fx(CallID)},
 		{<<"transactions">>,
-			{array, [[{<<"state">>, atom_to_binary(Tr, utf8)},
+			{array, [[{<<"state">>, fx(Tr)},
 				{<<"ts">>, as_erl_now(St)}] || {Tr, St} <- TRs]}}
 	],
 	K = mongoapi:new(spx, <<"openacd">>),
 	K:insert(<<"cdr">>, Entry),
 
+	try_insert(<<"cdr">>, Entry),
 	{ok, State}.
 
 commit(State) ->
-	{ok, State}.
+	{ok, State#state{agent_cache=dict:new()}}.
 
 rollback(State) ->
-	{ok, State}.
+	{ok, State#state{agent_cache=dict:new()}}.
 
 %% Internal
 find_agent(Summary) ->
@@ -88,6 +120,41 @@ get_profile(Ag) ->
 	end.
 
 
-as_erl_now(S) ->
-	{S div 1000000, S rem 1000000, 0}.
+as_erl_now(S) when is_integer(S) ->
+	{S div 1000000, S rem 1000000, 0};
+as_erl_now(_) ->
+	null.
+
+fx(undefined) -> null;
+fx(Atom) when is_atom(Atom) -> atom_to_binary(Atom, utf8);
+fx(Othr) -> Othr.
+
+get_clients(Login, Cache) ->
+	{Ag, Cache1} = get_agent(Login, Cache),
+	Clients = case Ag of
+		#agent_auth{skills=Skills} when is_list(Skills) ->
+			[Cl || {'_brand', Cl} <- Skills];
+		_ ->
+			[]
+	end,
+	{Clients, Cache1}.
+
+get_agent(Login, Cache) ->
+	case dict:find(Login, Cache) of
+		{ok, Ag} ->
+			{Ag, Cache};
+		_ ->
+			E = case catch agent_auth:get_agent_by_login(Login) of
+				{ok, E1} -> E1;
+				_ -> null
+			end,
+			{E, dict:store(Login, E, Cache)}
+	end.
+
+try_insert(Tbl, Entry) ->
+	K = mongoapi:new(spx, <<"openacd">>),
+	case catch K:insert(Tbl, Entry) of
+		ok -> ok;
+		Other -> lager:warning("Not able to insert to mongo records due to ~p: ~p", [Other, Entry])
+	end.
 
