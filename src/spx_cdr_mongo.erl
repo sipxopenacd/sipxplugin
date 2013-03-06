@@ -18,6 +18,7 @@
 }).
 
 init(_Opts) ->
+	try_ensure_ndxs(),
 	{ok, #state{}}.
 
 terminate(_Reason, _State) ->
@@ -58,6 +59,7 @@ dump(AgState, State) when is_record(AgState, agent_state) ->
 	{ok, State#state{agent_cache=Cache1}};
 dump(CDR, State) when is_record(CDR, cdr_rec) ->
 	Call = CDR#cdr_rec.media,
+
 	Summary = CDR#cdr_rec.summary,
 	Raws = CDR#cdr_rec.transactions,
 
@@ -67,25 +69,54 @@ dump(CDR, State) when is_record(CDR, cdr_rec) ->
 	%% WARN: might not be the active profile when the call was made
 	Profile = get_profile(Agent),
 
-	CallID = Call#call.id,
-	Client = (Call#call.client)#client.label,
+	CallId = Call#call.id,
+	Type = Call#call.type,
+	CallerId = case Call#call.callerid of
+		{X, Y} -> X ++ Y;
+		_ -> undefined
+	end,
+	Dnis = Call#call.dnis,
+	Mod = Call#call.source_module,
+	Direction = Call#call.direction,
 
-	TRs = [{Tr, St} || #cdr_raw{transaction=Tr, start=St}<-Raws, is_atom(Tr)],
+	Client = case Call#call.client of
+		#client{label=L} -> L;
+		_ -> undefined
+	end,
+
+
+	Start = get_start(Raws),
+	End = get_end(Raws),
+	CallEnd = get_call_end(Raws),
+
+	TRs = [{Tr, St} || #cdr_raw{transaction=Tr, start=St}<-Raws, is_atom(Tr),
+		Tr =/= cdrinit, Tr =/= cdrend],
 
 	Entry = [
-		{<<"vsn">>, <<"0.1.0">>},
+		{<<"callid">>, fx(CallId)},
+		{<<"start">>, as_erl_now(Start)},
+		{<<"end">>, as_erl_now(End)},
+		{<<"call_end">>, as_erl_now(CallEnd)},
+
+		%% @todo -- agent, profile, queue will be arrays once transfer is enabled
 		{<<"agent">>, fx(Agent)},
 		{<<"profile">>, fx(Profile)},
 		{<<"queue">>, fx(Queue)},
+
 		{<<"client">>, fx(Client)},
-		{<<"callid">>, fx(CallID)},
+
+		{<<"type">>, fx(Type)},
+		{<<"caller_id">>, fx(CallerId)},
+		{<<"dnis">>, fx(Dnis)},
+		{<<"mod">>, fx(Mod)},
+		{<<"direction">>, fx(Direction)},
+
 		{<<"transactions">>,
 			{array, [[{<<"state">>, fx(Tr)},
-				{<<"ts">>, as_erl_now(St)}] || {Tr, St} <- TRs]}}
-	],
-	K = mongoapi:new(spx, <<"openacd">>),
-	K:insert(<<"cdr">>, Entry),
+				{<<"ts">>, as_erl_now(St)}] || {Tr, St} <- TRs]}},
 
+		{<<"vsn">>, <<"0.1.1">>}
+	],
 	try_insert(<<"cdr">>, Entry),
 	{ok, State}.
 
@@ -101,7 +132,7 @@ find_agent(Summary) ->
 		{_, [{Ag, _}|_]} ->
 			Ag;
 		_ ->
-			null
+			undefined
 	end.
 
 find_queue(Summary) ->
@@ -109,15 +140,15 @@ find_queue(Summary) ->
 		{_, [{Q, _}|_]} ->
 			Q;
 		_ ->
-			null
+			undefined
 	end.
 
-get_profile(null) -> null;
-get_profile(Ag) ->
+get_profile(Ag) when is_list(Ag) ->
 	case catch agent_auth:get_agent_by_login(Ag) of
 		{ok, #agent_auth{profile=P}} -> P;
-		_ -> null
-	end.
+		_ -> undefined
+	end;
+get_profile(_) -> undefined.
 
 
 as_erl_now(S) when is_integer(S) ->
@@ -125,6 +156,7 @@ as_erl_now(S) when is_integer(S) ->
 as_erl_now(_) ->
 	null.
 
+fx(null) -> null;
 fx(undefined) -> null;
 fx(Atom) when is_atom(Atom) -> atom_to_binary(Atom, utf8);
 fx(Othr) -> Othr.
@@ -146,9 +178,50 @@ get_agent(Login, Cache) ->
 		_ ->
 			E = case catch agent_auth:get_agent_by_login(Login) of
 				{ok, E1} -> E1;
-				_ -> null
+				_ -> undefined
 			end,
 			{E, dict:store(Login, E, Cache)}
+	end.
+
+get_start([]) ->
+	undefined;
+get_start([#cdr_raw{transaction=cdrinit}|T]) ->
+	get_start(T);
+get_start([#cdr_raw{start=Ts}|_]) ->
+	Ts.
+
+get_end(Raws) ->
+	get_end1(lists:reverse(Raws)).
+
+%% reversed
+get_end1([]) ->
+	undefined;
+get_end1([#cdr_raw{transaction=cdrend}|T]) ->
+	get_end1(T);
+get_end1([#cdr_raw{start=Ts}|_]) ->
+	Ts.
+
+
+get_call_end(Raws) ->
+	get_call_end1(lists:reverse(Raws)).
+
+%% reversed
+get_call_end1([]) ->
+	undefined;
+get_call_end1([#cdr_raw{transaction=oncall, ended=Ts}|_]) ->
+	Ts;
+get_call_end1([_|T]) ->
+	get_call_end1(T).
+
+
+try_ensure_ndxs() ->
+	K = mongoapi:new(spx, <<"openacd">>),
+	try
+		K:ensureIndex(<<"cdr">>, [{<<"call_end">>, -1}, {<<"agent">>, 1}]),
+		K:ensureIndex(<<"asl">>, [{<<"end">>, -1}, {<<"agent">>, 1}])
+	catch
+		_:Err ->
+			lager:warning("Failed to ensure index: ~p", [Err])
 	end.
 
 try_insert(Tbl, Entry) ->
