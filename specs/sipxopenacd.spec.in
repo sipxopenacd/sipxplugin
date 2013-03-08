@@ -24,6 +24,7 @@ Vendor: SIPFoundry
 Summary: Erlang library for sipxopenacd
 BuildRequires:	erlang-rebar
 BuildRequires:	erlang-eunit
+BuildRequires:  erlang-meck
 BuildRequires:	erlang-lager
 BuildRequires:	erlang-ejrpc2
 BuildRequires:	erlang-openacd
