@@ -449,6 +449,13 @@ read_recipe_action(<<"transfer_queue">>, P) ->
 			{ok, {transfer_queue, binary_to_list(Bin)}};
 		_ ->
 			{error, invalid_vlu}
+	end;
+read_recipe_action(<<"transfer_outband">>, P) ->
+	case proplists:get_value(<<"actionValue">>, P) of
+		Bin when is_binary(Bin) ->
+			{ok, {transfer_outband, binary_to_list(Bin)}};
+		_ ->
+			{error, invalid_vlu}
 	end.
 
 build_skill(P) ->
@@ -741,7 +748,12 @@ build_recipe_test_() ->
 		?_assertEqual(ActionOnlyExp({transfer_queue, "nqueue"}),
 			BuildRecipeWithAction(<<"transfer_queue">>, <<"nqueue">>)),
 		?_assertEqual(EmptyStep,
-			BuildRecipeWithAction(<<"transfer_queue">>, 123))
+			BuildRecipeWithAction(<<"transfer_queue">>, 123)),
+
+		?_assertEqual(ActionOnlyExp({transfer_outband, "2058@ezuce.com"}),
+			BuildRecipeWithAction(<<"transfer_outband">>, <<"2058@ezuce.com">>)),
+		?_assertEqual(EmptyStep,
+			BuildRecipeWithAction(<<"transfer_outband">>, 123))
 
 		%% TODO custom operations
 	].
