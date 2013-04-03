@@ -12,10 +12,22 @@ rpmbuilddir = rpmbuild
 
 REBAR ?= rebar
 
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+datadir = @datadir@
+libdir = @libdir@
+localstatedir = @localstatedir@
+sysconfdir = @sysconfdir@
+
 edit = sed \
   -e 's|@PACKAGE_NAME[@]|$(package)|g' \
   -e 's|@PACKAGE_VERSION[@]|$(version)|g' \
-  -e 's|@APP_NAME[@]|$(appname)|g'
+  -e 's|@APP_NAME[@]|$(appname)|g' \
+  -e 's|@OPENACD_CONFDIR[@]|$(sysconfdir)/openacd|g' \
+  -e 's|@OPENACD_LOGDIR[@]|$(localstatedir)/log/openacd|g' \
+  -e 's|@OPENACD_BINDIR[@]|$(bindir)|g' \
+  -e 's|@OPENACD_KEYDIR[@]|$(localstatedir)/openacd/key|g'
 
 all: compile
 
@@ -29,7 +41,7 @@ clean:
 	-rm -rf $(distdir)
 	-rm -rf $(distdir).tar.gz
 
-src/$(appname).app.src : % : %.in Makefile
+src/$(appname).app.src etc/sipxopenacd.cfdat : % : %.in Makefile
 	$(edit) $(srcdir)/$@.in > $@
 
 check:
@@ -43,12 +55,18 @@ $(distdir).tar.gz: $(distdir)
 
 $(distdir): FORCE
 	mkdir -p $(distdir)/src
-	cp Makefile $(distdir)
+	mkdir -p $(distdir)/etc
+	cp Makefile.in $(distdir)
+	cp configure.ac $(distdir)
+	cp aclocal.m4 $(distdir)
 	cp rebar.config $(distdir)
 	cp rebar.config.script $(distdir)
 	cp src/$(appname).app.src.in $(distdir)/src
 	cp $(wildcard src/*.erl) $(distdir)/src
+	cp etc/*.cf $(distdir)/etc
+	cp etc/*.in $(distdir)/etc
 	$(edit) specs/$(package).spec.in > $(distdir)/$(package).spec
+	cd $(distdir); autoreconf -i
 
 distcheck: $(distdir).tar.gz
 	gzip -cd $(distdir).tar.gz | tar xvf -
@@ -61,6 +79,16 @@ distcheck: $(distdir).tar.gz
 FORCE:
 	-rm $(distdir).tar.gz >/dev/null 2>&1
 	-rm -rf $(distdir) >/dev/null 2>&1
+
+install: etc/sipxopenacd.cfdat compile
+	mkdir -p $(DESTDIR)$(libdir)/erlang/lib/$(appname)-$(version)/ebin
+	mkdir -p $(DESTDIR)$(libdir)/erlang/lib/$(appname)-$(version)/ebin
+	mkdir -p $(DESTDIR)$(datadir)/sipxecs/cfinputs/plugin.d
+	mkdir -p $(DESTDIR)$(localstatedir)/sipxdata/cfdata/defaults
+	install -m 644 ebin/$(appname).app $(DESTDIR)$(libdir)/erlang/lib/$(appname)-$(version)/ebin
+	install -m 644 ebin/*.beam $(DESTDIR)$(libdir)/erlang/lib/$(appname)-$(version)/ebin
+	install -m 644 etc/*.cf $(DESTDIR)$(datadir)/sipxecs/cfinputs/plugin.d
+	install -m 644 etc/*.cfdat $(DESTDIR)$(localstatedir)/sipxdata/cfdata/defaults
 
 rpms: $(distdir).tar.gz | $(rpmbuilddir)
 	-rm -rf rpms/*.rpm

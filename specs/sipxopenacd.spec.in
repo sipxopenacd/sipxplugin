@@ -47,13 +47,11 @@ Erlang library for sipxopenacd
 %setup -n %{name}-%{version}
 
 %build
+%configure
 make
 
 %install
-rm -rf %{buildroot}
-mkdir -p %{buildroot}%{_libdir}/erlang/lib/%{appname}-%{version}/ebin
-install -m 644 ebin/%{appname}.app %{buildroot}%{_libdir}/erlang/lib/%{appname}-%{version}/ebin
-install -m 644 ebin/*.beam %{buildroot}%{_libdir}/erlang/lib/%{appname}-%{version}/ebin
+make install DESTDIR=$RPM_BUILD_ROOT PREFIX=%{prefix}
 
 %clean
 rm -rf %{buildroot}
@@ -62,6 +60,8 @@ rm -rf %{buildroot}
 make check
 
 %files
+%{_datadir}/sipxecs/cfinputs/plugin.d/*.cf
+%{_localstatedir}/sipxdata/cfdata/defaults/*.cfdat
 
 %files -n erlang-%{appname}
 %dir %{_libdir}/erlang/lib/%{appname}-%{version}

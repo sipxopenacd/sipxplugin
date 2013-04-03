@@ -1,6 +1,7 @@
 ebin/*
 .eunit/*
 deps/*
+Makefile
 specs/sipxopenacd.spec
 rpms/*
 sipxopenacd-*.tar.gz
