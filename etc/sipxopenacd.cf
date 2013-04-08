@@ -31,6 +31,7 @@ bundle agent sipxopenacd_config {
       "$(sipx.SIPX_SERVICEDIR)/openacd"
         comment => "install openacd config $(this.promiser)",
         perms => m("755"),
+        move_obstructions => "true",
         link_from => ln_s("$(sipx.OPENACD_BINDIR)/openacd");
 
       # regular configs
