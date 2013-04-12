@@ -28,6 +28,7 @@ BuildRequires:  erlang-meck
 BuildRequires:	erlang-lager
 BuildRequires:	erlang-ejrpc2
 BuildRequires:	erlang-openacd
+BuildRequires:	erlang-oacd_freeswitch
 BuildRequires:	erlmongo
 Requires:	erlang-erts%{?_isa} >= R15B
 Requires:	erlang-kernel%{?_isa}
@@ -35,6 +36,7 @@ Requires:	erlang-stdlib%{?_isa} >= R15B
 Requires:	erlang-lager
 Requires:	erlang-ejrpc2
 Requires:	erlang-openacd
+Requires:	erlang-oacd_freeswitch
 Requires:	erlmongo
 
 %description
