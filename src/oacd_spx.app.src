@@ -5,7 +5,7 @@
 	oacd_spx_sup,
 	spx_autoloader
 	]},
-{applications, [kernel, stdlib, lager, erlmongo, ejrpc2, openacd]},
+{applications, [kernel, stdlib, lager, erlmongo, ejrpc2, openacd, oacd_freeswitch, oacd_dialplan]},
 {mod, {oacd_spx_app, []}},
 {start_phases, []}
 ]}.

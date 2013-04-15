@@ -29,6 +29,7 @@ BuildRequires:	erlang-lager
 BuildRequires:	erlang-ejrpc2
 BuildRequires:	erlang-openacd
 BuildRequires:	erlang-oacd_freeswitch
+BuildRequires:	erlang-oacd_dialplan
 BuildRequires:	erlmongo
 Requires:	erlang-erts%{?_isa} >= R15B
 Requires:	erlang-kernel%{?_isa}
@@ -37,6 +38,7 @@ Requires:	erlang-lager
 Requires:	erlang-ejrpc2
 Requires:	erlang-openacd
 Requires:	erlang-oacd_freeswitch
+Requires:	erlang-oacd_dialplan
 Requires:	erlmongo
 
 %description
