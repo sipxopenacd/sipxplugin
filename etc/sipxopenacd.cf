@@ -26,14 +26,6 @@ bundle agent sipxopenacd {
 bundle agent sipxopenacd_config {
   files:
     any::
-      # symlink service script mostly so it can be used registered to system
-      # when system starts in rh_chkconfig_status but also for user convienience
-      "$(sipx.SIPX_SERVICEDIR)/openacd"
-        comment => "install openacd config $(this.promiser)",
-        perms => m("755"),
-        move_obstructions => "true",
-        link_from => ln_s("$(sipx.OPENACD_BINDIR)/openacd");
-
       # regular configs
       "$(sipx.OPENACD_CONFDIR)/env.config"
         comment => "install openacd config $(this.promiser)",
