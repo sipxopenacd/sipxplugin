@@ -17,6 +17,7 @@ Source:		%{name}-%{version}.tar.gz
 BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 
 Requires:	erlang-%{appname}
+Requires:	openacd
 
 %package -n erlang-%{appname}
 Group: Development/Libraries
@@ -75,5 +76,8 @@ make check
 
 
 %changelog
+* Tue May 21 2013 Jan Vincent Liwanag
+- Add openacd as dependency
+
 * Thu Feb 10 2013 Jan Vincent Liwanag
 - New v2 release
