@@ -102,6 +102,7 @@ get_agent_by_id(ID) ->
 		_ -> none
 	end.
 
+-spec auth(Username::string(), Password::string()) -> {ok, #agent_auth{}} | {ok, deny} | pass | {error, not_connected}.
 auth(Username, Password) ->
 	case catch db_find_one(agent, [{<<"name">>, Username}]) of
 		{ok, []} -> pass;
@@ -120,6 +121,7 @@ auth(Username, Password) ->
 				_ ->
 					{ok, deny}
 			end;
+		not_connected -> {error, not_connected};
 		_ -> pass
 	end.
 
