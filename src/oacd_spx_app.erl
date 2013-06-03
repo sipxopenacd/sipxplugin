@@ -20,8 +20,9 @@
 start(_Type, _Args) ->
 	application:start(lager),
 	application:start(erlmongo),
-	oacd_spx_sup:start_link().
+	spx_db_connection:start_link(),
 
+	oacd_spx_sup:start_link().
 
 stop(_State) ->
 	ok.
