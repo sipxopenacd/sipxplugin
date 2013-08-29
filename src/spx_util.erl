@@ -244,9 +244,9 @@ build_queue([{<<"rcps">>, {array, Recipe}}|T], Acc) ->
 build_queue([{<<"enableWrapup">>, WrapupEnabled}|T], Acc) ->
 	build_queue(T, Acc#call_queue{wrapup_enabled=WrapupEnabled});
 build_queue([{<<"wrapupTimer">>, WrapupTimer}|T], Acc) ->
-	build_queue(T, Acc#call_queue{wrapup_timer=trunc(WrapupTimer)});
+	build_queue(T, Acc#call_queue{wrapup_timer=trunc(WrapupTimer)*1000});
 build_queue([{<<"autoWrapup">>, AutoWrapup}|T], Acc) ->
-	build_queue(T, Acc#call_queue{auto_wrapup=trunc(AutoWrapup)});
+	build_queue(T, Acc#call_queue{auto_wrapup=trunc(AutoWrapup)*1000});
 build_queue([_|T], Acc) ->
 	build_queue(T, Acc).
 
