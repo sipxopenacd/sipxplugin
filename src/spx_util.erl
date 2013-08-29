@@ -241,6 +241,12 @@ build_queue([{<<"qgrp">>, Group}|T], Acc) when is_binary(Group) ->
 	build_queue(T, Acc#call_queue{group=binary_to_list(Group)});
 build_queue([{<<"rcps">>, {array, Recipe}}|T], Acc) ->
 	build_queue(T, Acc#call_queue{recipe=build_recipe(Recipe)});
+build_queue([{<<"enableWrapup">>, WrapupEnabled}|T], Acc) ->
+	build_queue(T, Acc#call_queue{wrapup_enabled=WrapupEnabled});
+build_queue([{<<"wrapupTimer">>, WrapupTimer}|T], Acc) ->
+	build_queue(T, Acc#call_queue{wrapup_timer=trunc(WrapupTimer)});
+build_queue([{<<"autoWrapup">>, AutoWrapup}|T], Acc) ->
+	build_queue(T, Acc#call_queue{auto_wrapup=trunc(AutoWrapup)});
 build_queue([_|T], Acc) ->
 	build_queue(T, Acc).
 

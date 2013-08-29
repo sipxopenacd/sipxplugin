@@ -37,20 +37,49 @@ start() ->
     spx_autoloader:add_mod({?MODULE, ActionFun, undefined, undefined, ReloadFun}, none).
 
 %% Internal Functions
+% get_action(_) ->
+%     %% Non-atomic
+%     D = [{N, lists:sort(Skls), R, G} || {state, _, G, N, R, _, Skls, _, _} <- [call_queue:dump(P) || {_, P} <- queue_manager:queues()]],
+%     {ok, Qs} = call_queue_config:get_queues(),
+%     M = [{Q#call_queue.name, lists:sort(Q#call_queue.skills),
+%         Q#call_queue.recipe, Q#call_queue.group} || {ok, Q} <-
+%             [call_queue_config:get_merged_queue(X#call_queue.name) || X <- Qs]],
+
+%     R = lists:foldl(fun({N, _, _, _} = E, Acc) ->
+%         case lists:member(E, D) of
+%             true -> Acc;
+%             _ -> [N|Acc]
+%         end
+%     end, [], M),
+%     case R of
+%         [] -> none;
+%         _ -> {reload, R}
+%     end.
+
 get_action(_) ->
     %% Non-atomic
-    D = [{N, lists:sort(Skls), R, G} || {state, _, G, N, R, _, Skls, _, _} <- [call_queue:dump(P) || {_, P} <- queue_manager:queues()]],
+    ExistingQueues = [{N, call_queue:get_props(P)} || {N, P} <- queue_manager:queues()],
     {ok, Qs} = call_queue_config:get_queues(),
-    M = [{Q#call_queue.name, lists:sort(Q#call_queue.skills),
-        Q#call_queue.recipe, Q#call_queue.group} || {ok, Q} <-
+    ConfigQueues = [{Q#call_queue.name,
+        [{name, Q#call_queue.name},
+        {skills, lists:sort(Q#call_queue.skills)},
+        {recipe, Q#call_queue.recipe},
+        {group, Q#call_queue.group},
+        {wrapup_enabled, Q#call_queue.wrapup_enabled},
+        {wrapup_timer, Q#call_queue.wrapup_timer},
+        {auto_wrapup, Q#call_queue.auto_wrapup}]} || {ok, Q} <-
             [call_queue_config:get_merged_queue(X#call_queue.name) || X <- Qs]],
 
-    R = lists:foldl(fun({N, _, _, _} = E, Acc) ->
-        case lists:member(E, D) of
-            true -> Acc;
-            _ -> [N|Acc]
+    R = lists:foldl(fun({Name, ConfigProps}, Acc) ->
+        case proplists:get_value(Name, ExistingQueues) of
+            undefined -> [Name|Acc];
+            ExistingProps ->
+                case ExistingProps -- ConfigProps of
+                    [] -> Acc;
+                    _Changes -> [Name|Acc]
+                end
         end
-    end, [], M),
+    end, [], ConfigQueues),
     case R of
         [] -> none;
         _ -> {reload, R}
