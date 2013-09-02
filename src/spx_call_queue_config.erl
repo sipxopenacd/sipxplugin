@@ -210,7 +210,7 @@ db_find_one(Props) when is_list(Props) ->
 	DB = mongoapi:new(spx, ?DB),
 	DB:findOne(<<"entity">>, Props).
 
-as_type(queue) -> <<"openacdqueue">>;
+as_type(queue) -> <<"oucopenacdqueue">>;
 as_type(queuegroup) -> <<"openacdqueuegroup">>;
 as_type(skill) -> <<"openacdskill">>;
 as_type(client) -> <<"openacdclient">>.
