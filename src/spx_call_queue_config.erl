@@ -35,6 +35,8 @@
 ]).
 -export([
 	get_queue/1,
+	get_default_queue/0,
+	get_transfer_queue/0,
 	get_merged_queue/1,
 	get_queues/0,
 	get_queues_by_group/1
@@ -79,6 +81,12 @@ get_queue(Name) ->
 		_ ->
 			none
 	end.
+
+get_default_queue() ->
+	get_queue(?DEFAULT_QUEUE).
+
+get_transfer_queue() ->
+	get_queue(?TRANSFER_QUEUE).
 
 get_merged_queue(Name) ->
 	cpx_queue_util:simple_get_merged_queue(?MODULE, Name).
