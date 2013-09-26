@@ -5,3 +5,7 @@ Makefile
 specs/sipxopenacd.spec
 rpms/*
 sipxopenacd-*.tar.gz
+autom4te.cache
+config.log
+config.status
+configure
